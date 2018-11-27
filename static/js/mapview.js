@@ -188,6 +188,15 @@ function initialize() {
     var ggl = new L.Google('HYBRID');
     layersControl.addBaseLayer(ggl, gettext("Google Satellite Map"));
 
+    // add openstreetmap layer
+    var osmAttr = '&copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, <a href="http://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>';
+    var osm = new L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        options: {attribution: osmAttr}
+    });
+    layersControl.addBaseLayer(osm, gettext("OpenStreetMap"));
+    defaultMap = osm;
+    osm.addTo(map);
+
     // Get metadata about the map from MapBox
     var tileJSONAddFn = function(mapData, addToMap) {
         var innerFn = function(tilejson) {
@@ -241,7 +250,15 @@ function initialize() {
             // change to ssl url
             mapData.url = sslUrlPerfix + mapview.getMapboxMapname(mapData.url);
         }
-        wax.tilejson(mapData.url, tileJSONAddFn(mapData, defaultMap == mapData)); //ie, only add the default
+        $.get(mapData.url, undefined, function (data) {
+            if(data === undefined){
+                return;
+            }
+            if(data.message !== undefined && data.message === 'Account over limit.'){
+                return;
+            }
+            wax.tilejson(mapData.url, tileJSONAddFn(mapData, defaultMap == mapData)); //ie, only add the default
+        });
     });
 
     // create legend container
